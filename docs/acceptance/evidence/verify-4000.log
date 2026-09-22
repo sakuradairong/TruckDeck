@@ -9,7 +9,7 @@ PASS  WS 升级：非 /ws 路径被拒（404）  ::  404
 PASS  未 hello 即发 command → HELLO_REQUIRED  ::  HELLO_REQUIRED
 PASS  hello 版本不符 → hello ack 失败  ::  ok=false error=UNSUPPORTED_VERSION
 PASS  hello 握手返回契约字段且 mock=true  ::  mock=true Hz=10
-PASS  telemetry 频率达到契约下限（≥5Hz）  ::  9.33 Hz（14 帧 / 1.50s）
+PASS  telemetry 频率达到契约下限（≥5Hz）  ::  9.99 Hz（15 帧 / 1.50s）
 PASS  12 类 action 全部可用且状态与遥测一致（22 次操作）  ::  22 次操作 / 12 类 action 全部 ack 且回显一致
 PASS  非 JSON 载荷 → INVALID_JSON 且连接不断开  ::  INVALID_JSON
 PASS  未知消息类型 → UNKNOWN_TYPE  ::  UNKNOWN_TYPE

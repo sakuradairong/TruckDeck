@@ -46,6 +46,9 @@
 - 新增 `docs/acceptance/verify-ws.cjs`，把契约中的**负面路径**变成断言：外域 Origin / `Origin: null` / Origin 端口不符 / 非本机 Host 头 / 非 `/ws` 路径的拒绝，`HELLO_REQUIRED`、`UNSUPPORTED_VERSION`、`INVALID_JSON`、`UNKNOWN_TYPE`、`UNKNOWN_ACTION`、三类 `INVALID_VALUE`，以及超过 8 KiB 单帧导致的断开。
 - 对**当前工作区**重跑（不沿用上轮结论）：默认端口 `npm start` 与 `TRUCKDECK_PORT=4013 TRUCKDECK_MOCK=1` 两种方式均 **18/18 通过**，两次均为 22 次操作 / 12 类 action，实测 9.33 / 9.98 Hz。
 - 首轮遗留在 `/tmp` 的截图、验收输出与两个下游代理的原始日志已归档进 `docs/acceptance/`（`/tmp` 会被清空，归档前无法保证留存）。
+- **全新克隆验证发现并修复一个缺陷**：`server/public/` 被 `.gitignore` 排除，因此干净克隆后第一次 `npm test` 必然失败（`test/integration.test.js` 的 `GET /` 断言拿到 500）——只有先执行过 `npm run build` 才通过，即测试不自足。根因是运行时与契约 §1「无前端时提供极简状态页」不符：缺产物时返回 500 纯文本。现抽出 `server/src/statusPage.js`，由 `app.js`（运行时）与 `scripts/build.js`（构建兜底）共用，缺产物时返回 **200**，并新增回归测试 `test/frontendFallback.test.js`。
+- 当前 `npm test`：**26/26**（首轮 23 项 + 3 项状态页回归），在「已构建」与「删除 `server/public/` 后」两种状态下均通过。
+- 干净克隆全流程验证：`git clone` → `npm ci` → `npm test` → `npm run build` → 启动 → 端到端复验 **18/18**，证明入库文件集自足。
 
 原始输出：[`acceptance/evidence/verify-4000.json`](acceptance/evidence/verify-4000.json)、[`acceptance/evidence/verify-4013.json`](acceptance/evidence/verify-4013.json)。
 
@@ -56,5 +59,6 @@
 1. `feat(server): ...` — 工程脚本、Express/WS、config、遥测与输入、回归测试
 2. `feat(web): ...` — 手机端中控面板与 PWA 资源
 3. `docs(acceptance): ...` — 契约、架构、二期、验收记录与证据
+4. `fix(server): ...` — 全新克隆缺陷修复（缺前端产物时的极简状态页）及其回归测试
 
 原建议中的 `fix(integration)` 未单列：重连隔离与模式代次修正同时落在 `server/` 与 `web/`，无法在不拆散运行单元的前提下干净独立成一次提交，故随各自组件提交并在此说明。

@@ -1,8 +1,10 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const { assertLanRequest } = require('./lan');
+const { renderStatusPage } = require('./statusPage');
 
 function createApp(config, telemetry) {
   const app = express();
@@ -25,9 +27,16 @@ function createApp(config, telemetry) {
   app.use(express.static(config.publicDir, { index: 'index.html', fallthrough: true }));
 
   app.get('/', (req, res) => {
-    res.sendFile(path.join(config.publicDir, 'index.html'), (err) => {
+    const indexPath = path.join(config.publicDir, 'index.html');
+    // 契约 §1：无前端构建产物时提供极简状态页，且必须是 200。
+    // 全新克隆未执行 npm run build 时会走到这里；有产物时走 sendFile。
+    if (!fs.existsSync(indexPath)) {
+      res.status(200).type('text/html; charset=utf-8').send(renderStatusPage());
+      return;
+    }
+    res.sendFile(indexPath, (err) => {
       if (err) {
-        res.status(500).type('text/plain').send('public/index.html missing — run npm run build');
+        res.status(200).type('text/html; charset=utf-8').send(renderStatusPage());
       }
     });
   });

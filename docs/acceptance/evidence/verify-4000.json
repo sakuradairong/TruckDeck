@@ -1,7 +1,7 @@
 {
   "ok": true,
   "port": 4000,
-  "startedAt": "2026-09-22T08:28:29.699Z",
+  "startedAt": "2026-09-22T08:32:14.644Z",
   "node": "v24.18.0",
   "health": {
     "ok": true,
@@ -12,7 +12,7 @@
     "telemetryHz": 10,
     "version": "1"
   },
-  "telemetryHz": 9.33,
+  "telemetryHz": 9.99,
   "commandsVerified": 22,
   "actionsCovered": 12,
   "frontend": {
@@ -36,7 +36,7 @@
       "code": 1009
     }
   },
-  "finishedAt": "2026-09-22T08:28:35.746Z",
+  "finishedAt": "2026-09-22T08:32:20.750Z",
   "passedChecks": 18,
   "totalChecks": 18,
   "failedChecks": [],
@@ -99,7 +99,7 @@
     {
       "name": "telemetry 频率达到契约下限（≥5Hz）",
       "ok": true,
-      "detail": "9.33 Hz（14 帧 / 1.50s）"
+      "detail": "9.99 Hz（15 帧 / 1.50s）"
     },
     {
       "name": "12 类 action 全部可用且状态与遥测一致（22 次操作）",

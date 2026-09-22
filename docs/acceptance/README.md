@@ -67,6 +67,14 @@ docs/acceptance/
 
 结果：**默认端口 4000 与非默认端口 4013 均 18/18 通过**，两次均 `22 次操作 / 12 类 action`、实测频率 9.33 / 9.98 Hz。
 
+### 接手后修掉的缺陷：全新克隆无法通过 `npm test`
+
+`server/public/` 是构建产物且被 `.gitignore` 排除，而 `test/integration.test.js` 断言 `GET /` 为 200 —— 于是**干净克隆后第一次 `npm test` 必然失败**（拿到 500），必须先 `npm run build` 才通过，即测试不自足、CI 会误报。
+根因是运行时与契约 §1「无前端时提供极简状态页」不符：缺产物时返回的是 500 纯文本。
+
+修复：抽出 `server/src/statusPage.js`，由 `server/src/app.js`（运行时）与 `server/scripts/build.js`（构建兜底）共用，缺产物时返回 **200** 极简状态页；新增 `test/frontendFallback.test.js`（缺产物 200 状态页 / 有产物真实页面 / 文案共用）。
+修复后 `npm test` 为 **26/26**，并在「已构建」与「删除 `server/public/` 后」两种状态下均通过；干净克隆（`git clone` → `npm ci` → `npm test` → `npm run build` → 启动 → 本目录复验脚本）全流程通过。
+
 ---
 
 ## 如何复现
