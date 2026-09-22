@@ -1,0 +1,6 @@
+{
+  "port": 4000,
+  "telemetryHz": 10,
+  "wsPath": "/ws",
+  "keyTapMs": 50
+}

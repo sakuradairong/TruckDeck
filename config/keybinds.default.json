@@ -1,0 +1,20 @@
+{
+  "_comment": "键名须与游戏内一致且在白名单内。lights.parking 与 lights.beamLow 默认同为 L：游戏 L 为 off→parking→low→off 循环，服务端按遥测计算步数；关 parking 会连带关掉 low。wipers.auto/1/2/3/off 为可选独立映射；未映射时 live 不伪造档位。",
+  "lights.parking": "L",
+  "lights.beamLow": "L",
+  "lights.beamHigh": "K",
+  "lights.blinkerLeft": "BracketLeft",
+  "lights.blinkerRight": "BracketRight",
+  "lights.hazard": "H",
+  "wipers.cycle": "P",
+  "wipers.off": null,
+  "wipers.auto": null,
+  "wipers.1": null,
+  "wipers.2": null,
+  "wipers.3": null,
+  "handbrake.toggle": "Space",
+  "diffLock.toggle": "V",
+  "liftAxle.toggle": "U",
+  "cruise.toggle": "C",
+  "engine.toggle": "E"
+}

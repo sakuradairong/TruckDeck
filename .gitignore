@@ -1,0 +1,15 @@
+node_modules/
+server/public/
+*.log
+npm-debug.log*
+.DS_Store
+.env
+.env.*
+config/server.local.json
+config/keybinds.local.json
+*.tmp
+.idea/
+.vscode/
+
+# 验收证据目录中的日志需入库（覆盖上面的 *.log 忽略）
+!docs/acceptance/evidence/*.log
