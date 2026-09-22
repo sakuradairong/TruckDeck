@@ -40,6 +40,15 @@ async function main() {
     console.log(`[server] TruckDeck listening on http://0.0.0.0:${config.port}`);
     console.log(`[server] WebSocket path ${config.wsPath}`);
     console.log(`[server] mock=${telemetry.isMock()} (${telemetry.getModeReason()})`);
+    console.log(`[config] 键位来源：${config.keybindsSource}`);
+    console.log(
+      '[config] 双闪=' + config.keybinds['lights.hazard'] +
+        ' 灯光=' + config.keybinds['lights.parking'] +
+        ' 远光=' + config.keybinds['lights.beamHigh'] +
+        ' 雨刮=' + config.keybinds['wipers.cycle'] +
+        ' 手刹=' + config.keybinds['handbrake.toggle'] +
+        ' 引擎=' + config.keybinds['engine.toggle'],
+    );
   });
 }
 

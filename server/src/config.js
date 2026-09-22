@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { readGameKeybinds } = require('./keybindsGame');
 
 const ROOT = path.join(__dirname, '..', '..');
 /** Frozen WebSocket path — not overridable by config file. */
@@ -31,11 +32,11 @@ function finiteInt(value, fallback) {
   return Math.trunc(n);
 }
 
-function loadConfig() {
+function loadConfig(env = process.env) {
   const serverDefaults = readJson(path.join(ROOT, 'config', 'server.default.json'));
   const keybindsRaw = readJson(path.join(ROOT, 'config', 'keybinds.default.json'));
 
-  let port = finiteInt(process.env.TRUCKDECK_PORT || serverDefaults.port || 4000, 4000);
+  let port = finiteInt(env.TRUCKDECK_PORT || serverDefaults.port || 4000, 4000);
   if (port < 1 || port > 65535) {
     throw new Error(`invalid port ${port}; expected 1..65535`);
   }
@@ -53,11 +54,52 @@ function loadConfig() {
     console.warn(`[config] ignoring wsPath=${serverDefaults.wsPath}; frozen at ${WS_PATH}`);
   }
 
-  const forceMock = process.env.TRUCKDECK_MOCK === '1' || process.env.TRUCKDECK_MOCK === 'true';
+  const forceMock = env.TRUCKDECK_MOCK === '1' || env.TRUCKDECK_MOCK === 'true';
 
-  const keybinds = {};
+  // ---- 键位来源优先级：游戏 controls.sii（auto）→ 回退 keybinds.default.json → keybinds.local.json 覆盖 ----
+  const keybindsMode = String(env.TRUCKDECK_KEYBINDS || serverDefaults.keybindsMode || 'auto').toLowerCase();
+  const mergedRaw = {};
   for (const [action, key] of Object.entries(keybindsRaw)) {
     if (action.startsWith('_')) continue;
+    mergedRaw[action] = key === undefined ? null : key;
+  }
+  const sources = ['config/keybinds.default.json'];
+
+  if (keybindsMode !== 'file' && keybindsMode !== 'off') {
+    const gameKeys = readGameKeybinds({ env });
+    if (gameKeys.ok) {
+      for (const [action, key] of Object.entries(gameKeys.keybinds)) mergedRaw[action] = key;
+      sources.length = 0;
+      sources.push(`游戏 ${gameKeys.source.game} 存档 ${gameKeys.source.profile} 的 controls.sii`);
+      if (gameKeys.unsupported.length > 0) {
+        console.warn(
+          '[config] 游戏中以下动作绑定了不可注入的键，已忽略：' +
+            gameKeys.unsupported.map((u) => `${u.action}=${u.scsKey}`).join(', '),
+        );
+      }
+    } else {
+      sources[0] = `config/keybinds.default.json（未读取到游戏键位：${gameKeys.reason}）`;
+    }
+  }
+
+  const localKeyPath = path.join(ROOT, 'config', 'keybinds.local.json');
+  if (fs.existsSync(localKeyPath)) {
+    try {
+      const localRaw = readJson(localKeyPath);
+      let applied = 0;
+      for (const [action, key] of Object.entries(localRaw)) {
+        if (action.startsWith('_')) continue;
+        mergedRaw[action] = key === undefined ? null : key;
+        applied += 1;
+      }
+      if (applied > 0) sources.push(`config/keybinds.local.json（${applied} 项覆盖）`);
+    } catch (err) {
+      console.warn('[config] keybinds.local.json 解析失败，已忽略：' + err.message);
+    }
+  }
+
+  const keybinds = {};
+  for (const [action, key] of Object.entries(mergedRaw)) {
     if (key === null || key === undefined || key === '') {
       keybinds[action] = null;
       continue;
@@ -76,6 +118,8 @@ function loadConfig() {
     keyTapMs,
     forceMock,
     keybinds,
+    keybindsMode,
+    keybindsSource: sources.join(' + '),
     publicDir: path.join(ROOT, 'server', 'public'),
     commandQueueMax: 32,
     maxPayload: 8192,

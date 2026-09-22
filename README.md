@@ -130,7 +130,30 @@ TRUCKDECK_PORT=4000 npm start
 - **mock / 断线绝不注入。** 命令全进程串行有界队列。
 - 游戏窗口需前台焦点；`dispose` 先 `quit` 等待 worker 释放按键，再必要时 kill。
 - Node/PowerShell 与游戏应处于相同权限级别。游戏若以管理员身份运行，普通权限的 SendInput 可能被 Windows UIPI 拒绝；优先让游戏和服务都以普通权限运行。
-- 修改映射：`config/keybinds.default.json`，须与游戏内一致且在白名单内。
+- 修改映射：`config/keybinds.default.json`，须与游戏内一致且在白名单内。**默认值按 ETS2/ATS 出厂键位**：
+
+  | TruckDeck 动作 | 出厂键 | 游戏内名称 |
+  | --- | --- | --- |
+  | `lights.parking` / `lights.beamLow` | `L` | Toggle Light Modes（`off→parking→low→off`，共用一键，服务端按遥测算步数） |
+  | `lights.beamHigh` | `K` | High Beam Headlights |
+  | `lights.blinkerLeft` / `lights.blinkerRight` | `[` / `]` | Left / Right Turn Signal |
+  | `lights.hazard` | **`F`** | **Hazard Lights（危险警示灯／双闪）** |
+  | `wipers.cycle` | `P` | Windshield Wipers（`off`/`AUTO`/`2`/`3` 默认不映射） |
+  | `handbrake.toggle` | `Space` | Handbrake |
+  | `diffLock.toggle` | `V` | Differential Lock |
+  | `liftAxle.toggle` | `U` | Lift / Let down axle |
+  | `cruise.toggle` | `C` | Cruise Control |
+  | `engine.toggle` | `E` | Start / Stop Engine |
+
+  > ⚠️ **别把双闪填成 `H`**：ETS2/ATS 里 `H` 是喇叭（Sound Signal），`O` 是旋转警示灯（Warning Lights），双闪的出厂键是 **`F`**。本文件已按上表修正，`npm test` 会校验这份默认键位表（含"任何动作都不得映射到喇叭键"），防止回归。若你在游戏内改过键位（设置 → 按键），请把上表对应项改成与游戏一致，否则会触发别的功能。
+
+  > ✅ **键位默认自动读取玩家的真实配置**（`keybindsMode: "auto"`，定义在 `config/server.default.json`）：
+  > 服务启动时解析 `Documents/<游戏>/{steam_profiles,profiles}/<档案>/controls.sii`（多档案时取最近修改的那个），
+  > 例如双闪读的是游戏内部动作 `mix flasher4way`、手刹 `mix parkingbrake`、差速锁 `mix diflock`、定速 `mix cruiectrl`。
+  > 读不到就回退到本文件的默认值；只想改单项可用 `config/keybinds.local.json`（优先级最高，已被 .gitignore 忽略）。
+  > 关闭自动读取：把 `keybindsMode` 设为 `"file"`，或设环境变量 `TRUCKDECK_KEYBINDS=file`。
+  > 启动日志会打印 `[config] 键位来源：…` 与关键键位，一眼可确认是否读对。
+
 
 ### 灯光 / 雨刮真实性限制
 
