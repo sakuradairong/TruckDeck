@@ -3,5 +3,7 @@
   "telemetryHz": 10,
   "wsPath": "/ws",
   "keyTapMs": 50,
-  "keybindsMode": "auto"
+  "keybindsMode": "auto",
+  "inputMode": "auto",
+  "scsWipersResetOnConnect": true
 }

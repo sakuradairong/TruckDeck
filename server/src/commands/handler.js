@@ -2,6 +2,7 @@
 
 const { WIPER_ORDER } = require('../telemetry/mock');
 const { planSharedLightCycle, planToggleTap } = require('./lightCycle');
+const { planScsAction, getPath } = require('./scsPlan');
 
 const LIGHT_ACTIONS = new Set([
   'lights.parking',
@@ -33,6 +34,9 @@ const LIGHT_STATE_KEY = {
 
 const TELEMETRY_WAIT_MS = 600;
 const TAP_SETTLE_MS = 80;
+/** 语义输入（scs）注入后的等待与遥测确认窗口 */
+const SCS_SETTLE_MS = 120;
+const SCS_CONFIRM_MS = 700;
 
 function validateCommand(msg) {
   if (!msg || typeof msg.action !== 'string') {
@@ -259,6 +263,73 @@ async function executeLiveLights(ctx, action, value) {
   return { ok: true };
 }
 
+/**
+ * SCS 语义输入路径。返回 { handled:false } 表示"未处理，请走键盘注入"。
+ * 只在"通道不可用 / 该动作无映射 / 通道写入失败"时回退键盘；
+ * 注入已发出但遥测未确认时不回退，避免同一动作被触发两次。
+ */
+async function tryScsCommand(ctx, action, value) {
+  const { telemetry, input, config } = ctx;
+  if (!input || typeof input.scsPulse !== 'function' || typeof input.scsAvailable !== 'function') {
+    return { handled: false };
+  }
+  const mode = String(input.inputMode || 'keyboard').toLowerCase();
+  if (mode !== 'scs' && mode !== 'auto') return { handled: false };
+
+  let available;
+  try {
+    available = await input.scsAvailable();
+  } catch (err) {
+    available = { ok: false, error: String(err.message || err) };
+  }
+  if (!available || !available.ok) return { handled: false };
+
+  const snap = telemetry.snapshot();
+  const g = telemetry.requireLive();
+  if (!g.ok) return { handled: true, result: g };
+
+  const p = planScsAction(action, value, snap);
+  if (!p.ok) {
+    // auto 模式：没有语义映射的动作交给键盘实现
+    if (mode === 'auto') return { handled: false };
+    return { handled: true, result: p };
+  }
+  if (p.noop) return { handled: true, result: { ok: true, note: p.reason } };
+
+  for (let i = 0; i < p.pulses.length; i += 1) {
+    const r = await input.scsPulse(p.pulses[i], config.keyTapMs);
+    if (!r || !r.ok) {
+      const err = (r && r.error) || 'INJECT_FAILED';
+      if (mode === 'auto' && (err === 'SCS_UNAVAILABLE' || err === 'UNSUPPORTED')) {
+        return { handled: false }; // 尚未写入游戏 → 可安全回退键盘
+      }
+      return { handled: true, result: r || { ok: false, error: err, message: 'scs pulse failed' } };
+    }
+    await sleep(SCS_SETTLE_MS);
+  }
+
+  const matched = await waitLiveMatch(
+    telemetry,
+    (after) =>
+      p.confirm.every((c) => {
+        const cur = getPath(after, c.path);
+        if (Object.prototype.hasOwnProperty.call(c, 'value')) return cur === c.value;
+        if (Object.prototype.hasOwnProperty.call(c, 'notValue')) return cur !== c.notValue;
+        return true;
+      }),
+    SCS_CONFIRM_MS,
+  );
+  if (!matched.ok) {
+    return {
+      handled: true,
+      result: matched.error
+        ? matched
+        : { ok: false, error: 'INJECT_FAILED', message: 'scs action not confirmed by telemetry' },
+    };
+  }
+  return { handled: true, result: { ok: true, via: 'scs', inputs: p.pulses } };
+}
+
 async function executeCommand(ctx, action, value) {
   const { config, telemetry, input } = ctx;
 
@@ -276,6 +347,10 @@ async function executeCommand(ctx, action, value) {
     // started as mock. Mid-live loss is handled inside live* via requireLive.
     return telemetry.applyMockCommand(action, value);
   }
+
+  // live：优先走 SCS 语义输入（inputMode=scs/auto）；通道不可用或无映射时回退键盘
+  const scs = await tryScsCommand(ctx, action, value);
+  if (scs.handled) return scs.result;
 
   if (LIGHT_ACTIONS.has(action)) {
     return executeLiveLights(ctx, action, value);

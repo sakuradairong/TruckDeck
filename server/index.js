@@ -41,6 +41,7 @@ async function main() {
     console.log(`[server] WebSocket path ${config.wsPath}`);
     console.log(`[server] mock=${telemetry.isMock()} (${telemetry.getModeReason()})`);
     console.log(`[config] 键位来源：${config.keybindsSource}`);
+    console.log(`[config] 输入通道：${config.inputMode}（keyboard=SendInput 按键；scs=语义输入，不经键盘）`);
     console.log(
       '[config] 双闪=' + config.keybinds['lights.hazard'] +
         ' 灯光=' + config.keybinds['lights.parking'] +

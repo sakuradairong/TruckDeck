@@ -56,6 +56,15 @@ function loadConfig(env = process.env) {
 
   const forceMock = env.TRUCKDECK_MOCK === '1' || env.TRUCKDECK_MOCK === 'true';
 
+  // 输入通道：keyboard（SendInput）| scs（scs_sdk_controller 语义输入）| auto（优先 scs，失败回退键盘）
+  let inputMode = String(env.TRUCKDECK_INPUT || serverDefaults.inputMode || 'keyboard').toLowerCase();
+  if (inputMode !== 'keyboard' && inputMode !== 'scs' && inputMode !== 'auto') {
+    console.warn(`[config] 未知 inputMode "${inputMode}"，回退 keyboard`);
+    inputMode = 'keyboard';
+  }
+  const scsWipersResetOnConnect =
+    serverDefaults.scsWipersResetOnConnect !== false && env.TRUCKDECK_SCS_WIPERS_RESET !== '0';
+
   // ---- 键位来源优先级：游戏 controls.sii（auto）→ 回退 keybinds.default.json → keybinds.local.json 覆盖 ----
   const keybindsMode = String(env.TRUCKDECK_KEYBINDS || serverDefaults.keybindsMode || 'auto').toLowerCase();
   const mergedRaw = {};
@@ -120,6 +129,8 @@ function loadConfig(env = process.env) {
     keybinds,
     keybindsMode,
     keybindsSource: sources.join(' + '),
+    inputMode,
+    scsWipersResetOnConnect,
     publicDir: path.join(ROOT, 'server', 'public'),
     commandQueueMax: 32,
     maxPayload: 8192,
