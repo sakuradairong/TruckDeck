@@ -1,11 +1,28 @@
 # TruckDeck
 
-局域网电脑上的 Node 服务 + 手机浏览器横屏控制 **Euro Truck Simulator 2 / American Truck Simulator**。  
+局域网电脑上的 Node 服务 + 手机浏览器横屏中控，用于 **Euro Truck Simulator 2 / American Truck Simulator**。  
 默认端口 **4000**，WebSocket 路径 **`/ws`**。仅私网使用，不提供公网隧道。
 
-后端与契约由 Cursor Agent 实现，手机面板由 Cline Agent 实现，Astra 完成接口对齐与独立验收。前端为原生 HTML/CSS/JS，无 CDN。
+![手机中控面板（844×390 横屏）](docs/acceptance/landscape-844x390.png)
 
-契约全文：[`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)（**v1 已冻结**）
+`npm test` **26/26** · 端到端复验 **18/18**（默认端口与非默认端口各一轮）· 契约 **v1 已冻结** · **Windows 实机注入待验收**
+
+## 它做什么
+
+- 电脑跑一个 Node 服务（Express + `ws`）：把游戏遥测推给手机，把手机上的按钮点按变成游戏按键。
+- 手机打开即是横屏深色中控：16 个控制按钮，状态**以后续遥测回显为准**，不把“命令已发送”当成“游戏已切换”。
+- 游戏/插件不存在时自动进入 **mock**：面板全功能可演示，且**绝不**向操作系统注入按键。
+- 只服务局域网：私网来源校验 + WebSocket Origin 校验，避免任意网页跨站触发键盘注入。
+
+## 一期功能
+
+| 分区 | 按钮 | 行为 |
+| --- | --- | --- |
+| 灯语 | 示廓、近光、远光、左转向、右转向、双闪 | 带 `boolean` 目标状态；示廓与近光默认共用 `L` 键，服务端按当前遥测算循环步数 |
+| 雨刮 | `0` / `AUTO` / `1` / `2` / `3` | mock 全五档可用；真实源 SDK 只能回读开/关，不伪造档位 |
+| 车辆 | 手刹、差速锁、提升桥、定速、发动机起停 | `toggle`；无键位映射时返回 `UNSUPPORTED`，不假装成功 |
+
+二期（vJoy 陀螺仪方向盘）只留接口与 TODO，一期不实现：见 [`docs/PHASE2_VJOY.md`](docs/PHASE2_VJOY.md)。
 
 ---
 
@@ -136,13 +153,60 @@ Mock 下有效 command 会改模拟仪表并打 `[mock]` 日志。
 
 ---
 
+## 架构与目录
+
+```
+TruckDeck/
+├── server/                 # Node 服务：HTTP + WebSocket + 遥测 + 按键
+│   ├── index.js            # 入口：装配 config/telemetry/input/wsHub，SIGINT/SIGTERM 优雅停机
+│   ├── src/app.js          # Express：/health、静态托管、局域网与 Origin 校验
+│   ├── src/wsHub.js        # /ws 升级、hello 握手、遥测广播、命令分发与速率限制
+│   ├── src/telemetry/      # scs-sdk-plugin（trucksim-telemetry）与 mock 两套实现，自动切换
+│   ├── src/input/          # Windows PowerShell SendInput worker（Linux 下为协议替身）
+│   ├── src/commands/       # 命令校验、有界串行队列、灯光循环规划
+│   ├── src/lan.js          # 私网来源与本机 Host / Origin 判定
+│   └── scripts/build.js    # web/ → server/public/（缺前端时写入极简状态页）
+├── web/                    # 手机端中控（原生 HTML/CSS/JS，无 CDN；构建产物由 server 托管）
+├── config/                 # keybinds.default.json（键位白名单）、server.default.json
+├── test/                   # node --test：协议 / 队列 / 模式 / 状态页回归（不依赖构建产物）
+└── docs/                   # 冻结契约、架构、二期、验收记录与证据
+```
+
+数据流：`游戏 ↔ scs-sdk-plugin 共享内存 → telemetry → wsHub 广播 → 手机`，`手机 command → 校验 → 有界串行队列 → input（注入或 mock）→ 遥测回显`。
+模式切换（mock ↔ live）会推进代次，旧模式下积压的命令直接作废，避免误注入。
+
+## 协议速览
+
+```json
+// 手机 → 服务：必须先握手
+{"type":"hello","role":"web","version":"1"}
+// 服务 → 手机：握手确认（mock 状态与推送频率）
+{"type":"hello","ok":true,"role":"server","version":"1","mock":true,"telemetryHz":10,"ts":1710000000000}
+
+// 服务 → 手机：遥测（契约下限 ≥5Hz，默认 10Hz）
+{"type":"telemetry","ts":1710000000000,"data":{"connected":true,"speedKmh":0,"engineRpm":0,"gear":0,
+ "fuelPct":0,"airPressure":0,"lights":{"parking":false,"beamLow":false,"beamHigh":false,
+ "blinkerLeft":false,"blinkerRight":false,"hazard":false},"wipers":"off","handbrake":false,
+ "diffLock":false,"liftAxle":false,"cruise":false,"engineOn":false}}
+
+// 手机 → 服务：命令（12 类 action；可选 id 原样回传）
+{"type":"command","id":"c1","action":"lights.beamLow","value":true}
+// 服务 → 手机：确认 / 拒绝（HELLO_REQUIRED、INVALID_VALUE、UNKNOWN_ACTION、UNSUPPORTED…）
+{"type":"command_ack","ok":true,"action":"lights.beamLow","id":"c1","ts":1710000000000}
+```
+
+完整字段、单位、错误枚举与安全要求见 [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)。
+
 ## 开发与测试
 
 ```bash
-npm test                 # test/*.test.js（默认测端口 4011，不占用 4000）
+npm test                                  # 26 项：协议、队列、模式切换、状态页（默认占 4011，不动 4000）
+npm start &                               # 启动后做端到端复验（HTTP + WS）
+node docs/acceptance/verify-ws.cjs 4000   # 18 项：含 Origin/Host 拒绝、HELLO_REQUIRED、8KiB 帧上限等
 ```
 
-编辑 `web/` 后运行 `npm run build`，刷新手机即可加载静态更新；修改后端或 JSON 配置后需重启服务。实际验证结果见 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md)。
+测试**不依赖构建产物**，全新克隆可直接 `npm ci && npm test`；脚本 stdout 为 JSON、stderr 为 `PASS/FAIL` 日志。
+编辑 `web/` 后运行 `npm run build` 并刷新手机即可；改后端或 JSON 配置需重启服务。实际验证结果见 [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md)。
 
 ### 重启服务
 
@@ -181,10 +245,24 @@ Windows 上退出强制模拟：PowerShell 执行 `Remove-Item Env:TRUCKDECK_MOC
 
 ---
 
+## 验收与实现出处
+
+一期由「编排放 + 两个实现代理」完成，并保留可复核证据：契约由 Cursor Agent 实现并冻结，手机面板由 Cline Agent 实现，接口对齐、返修指派与独立验收由编排放完成；`docs/acceptance/` 存放截图、原始输出、派单与回传原文、以及两个代理的真实运行日志（已扫描确认无凭据）。
+
+- `npm test` **26/26**（协议、队列、模式切换、状态页回归）
+- 端到端复验 **18/18**：默认端口 4000 与非默认端口 4013 各一轮；12 类 action、22 次操作全部 ack 且与后续遥测一致；实测遥测 9.33 / 9.98 Hz
+- 安全拒绝路径：外域 / `null` / 端口不符 Origin、非本机 Host、非 `/ws` 路径、未握手命令、非法 JSON 与非法 value、超过 8 KiB 单帧
+- 复现步骤与证据清单：[`docs/acceptance/README.md`](docs/acceptance/README.md)
+
 ## 文档
 
-- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — 冻结契约
-- [`docs/INTEGRATION_PATCH.md`](docs/INTEGRATION_PATCH.md) — 对接补丁说明
-- [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) — 实测结果、分工与限制
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — 结构
-- [`docs/PHASE2_VJOY.md`](docs/PHASE2_VJOY.md) — 二期入口
+- [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md) — 冻结契约 v1：端点、消息、action 枚举、单位、错误码、安全要求
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — 模块划分与启动流程
+- [`docs/INTEGRATION_PATCH.md`](docs/INTEGRATION_PATCH.md) — 前后端对接的行为澄清与修正
+- [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) — 验收记录：分工、实测数据、已知限制
+- [`docs/acceptance/README.md`](docs/acceptance/README.md) — 证据目录、复现命令、代理日志说明
+- [`docs/PHASE2_VJOY.md`](docs/PHASE2_VJOY.md) — 二期 vJoy / 陀螺仪接口草稿
+
+## 许可
+
+本仓库尚未声明开源许可（默认保留所有权利）。如需复用或二次分发，请先开 issue 说明用途。
