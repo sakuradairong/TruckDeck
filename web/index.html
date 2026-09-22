@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<!-- 不禁用用户缩放：不写 user-scalable=no / maximum-scale -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TruckDeck · 手机中控</title>
+<meta name="description" content="局域网手机车载中控：灯光、雨刮与车辆功能。连接 TruckDeck 服务端，遥测为准。" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0e1014" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
+<link rel="alternate icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="TruckDeck" />
+<meta name="format-detection" content="telephone=no" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand" aria-hidden="true">
+      <span class="brand__mark"></span>
+      <span class="brand__name">TRUCKDECK</span>
+      <span class="brand__sub">中控</span>
+    </div>
+
+    <div class="statuses" role="status" aria-live="polite">
+      <span class="pill" id="pill-conn" data-tone="idle">
+        <span class="pill__dot" aria-hidden="true"></span>
+        <span class="pill__text" id="pill-conn-text">正在连接…</span>
+      </span>
+      <span class="pill" id="pill-mode" data-tone="idle">
+        <span class="pill__dot" aria-hidden="true"></span>
+        <span class="pill__text" id="pill-mode-text">模式未知</span>
+      </span>
+      <span class="pill pill--plain" id="pill-tele">
+        <span class="pill__text" id="pill-tele-text">遥测：等待数据</span>
+      </span>
+      <span class="pill pill--plain pill--host" id="pill-host">
+        <span class="pill__text" id="pill-host-text">—</span>
+      </span>
+    </div>
+
+    <div class="topbar__actions">
+      <button class="chip" type="button" id="btn-reconnect">重新连接</button>
+      <button class="chip" type="button" id="btn-fullscreen" aria-pressed="false">全屏</button>
+    </div>
+  </header>
+
+  <p class="banner banner--lock" id="lock-banner" role="alert" hidden>
+    <span class="banner__icon" aria-hidden="true">⏳</span>
+    <span id="lock-banner-text">控制已锁定：正在连接控制服务…</span>
+  </p>
+
+  <div class="banner banner--hint" id="orient-hint" hidden>
+    <span class="banner__icon" aria-hidden="true">↔</span>
+    <span>建议横屏使用：横屏可获得完整仪表布局。竖屏同样可以操作，不会丢失任何按钮。</span>
+    <button class="chip chip--ghost" type="button" id="btn-orient-dismiss">知道了</button>
+  </div>
+
+  <noscript>
+    <p class="banner banner--lock">本页面需要启用 JavaScript 才能连接控制服务并操作车辆功能。</p>
+  </noscript>
+
+  <main class="layout">
+
+    <!-- 灯光 LIGHTS -->
+    <section class="panel panel--lights" aria-labelledby="t-lights">
+      <div class="panel__head">
+        <h2 class="panel__title" id="t-lights">灯光 <span class="en">LIGHTS</span></h2>
+        <span class="panel__hint">按下即请求目标状态</span>
+      </div>
+      <div class="light-grid">
+        <button class="ctl ctl--light" type="button" data-action="lights.parking" data-state-key="parking"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6"/><path d="M12 3.6v2.6M12 17.8v2.6M3.6 12h2.6M17.8 12h2.6M6.1 6.1l1.9 1.9M16 16l1.9 1.9M17.9 6.1L16 8M8 16l-1.9 1.9"/></svg></span>
+          <span class="ctl__label">示廓灯</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--light" type="button" data-action="lights.beamLow" data-state-key="beamLow"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.6 9.2h3.2a3.1 3.1 0 010 6.2H3.6z"/><path d="M12.6 11.6l6 3M12.6 14.4l6 3M12.6 17.2l4.4 2.2"/></svg></span>
+          <span class="ctl__label">近光灯</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--light" type="button" data-action="lights.beamHigh" data-state-key="beamHigh"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.6 9.2h3.2a3.1 3.1 0 010 6.2H3.6z"/><path d="M12.4 7.8h4.6M12.4 10.6h7.4M12.4 13.4h7.4M12.4 16.2h4.6"/></svg></span>
+          <span class="ctl__label">远光灯</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--light" type="button" data-action="lights.blinkerLeft" data-state-key="blinkerLeft"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 4.6L4.6 12 11 19.4"/><path d="M4.6 12h14.8"/></svg></span>
+          <span class="ctl__label">左转向</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--light" type="button" data-action="lights.blinkerRight" data-state-key="blinkerRight"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 4.6L19.4 12 13 19.4"/><path d="M4.6 12h14.8"/></svg></span>
+          <span class="ctl__label">右转向</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--light" type="button" data-action="lights.hazard" data-state-key="hazard"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4.2l8.6 14.4H3.4z"/><path d="M12 9.8v4.2M12 16.6h.01"/></svg></span>
+          <span class="ctl__label">双闪</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+      </div>
+      <p class="panel__foot" id="lights-note">灯光以服务端遥测回读为准；共用循环键的车型可能需要 1–2 次按键生效。</p>
+    </section>
+
+    <!-- 仪表 + 雨刮 + 方向盘占位 -->
+    <section class="panel panel--center" aria-labelledby="t-instruments">
+      <div class="panel__head">
+        <h2 class="panel__title" id="t-instruments">仪表 <span class="en">CLUSTER</span></h2>
+        <span class="panel__hint" id="mode-inline">—</span>
+      </div>
+
+      <div class="cluster">
+        <div class="gauge">
+          <span class="gauge__label">车速</span>
+          <span class="gauge__value" id="tele-speed">--</span>
+          <span class="gauge__unit">km/h</span>
+        </div>
+        <div class="cluster__side">
+          <div class="mini">
+            <span class="mini__label">转速</span>
+            <span class="mini__value" id="tele-rpm">--</span>
+            <span class="mini__unit">RPM</span>
+          </div>
+          <div class="mini mini--gear">
+            <span class="mini__label">档位</span>
+            <span class="mini__value" id="tele-gear">--</span>
+            <span class="mini__unit">GEAR</span>
+          </div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <span class="bar-row__label">燃油</span>
+            <span class="bar"><span class="bar__fill bar__fill--fuel" id="tele-fuel-bar"></span></span>
+            <span class="bar-row__value" id="tele-fuel">-- %</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row__label">气压</span>
+            <span class="bar"><span class="bar__fill bar__fill--air" id="tele-air-bar"></span></span>
+            <span class="bar-row__value" id="tele-air">-- psi</span>
+          </div>
+        </div>
+        <p class="cluster__stamp" id="tele-stamp">等待遥测数据…</p>
+        <p class="cluster__warn" id="tele-warn" role="status" hidden></p>
+      </div>
+
+      <div class="wiper" role="group" aria-labelledby="t-wiper">
+        <div class="wiper__head">
+          <h3 class="panel__subtitle" id="t-wiper">雨刮 <span class="en">WIPER</span></h3>
+          <span class="wiper__current" id="wiper-current">当前：未知</span>
+        </div>
+        <div class="wiper__grid">
+          <button class="ctl ctl--wiper" type="button" data-wiper-value="off" aria-pressed="false" disabled>
+            <span class="ctl__label ctl__label--big">0</span><span class="ctl__sub">关闭</span>
+          </button>
+          <button class="ctl ctl--wiper" type="button" data-wiper-value="auto" aria-pressed="false" disabled>
+            <span class="ctl__label ctl__label--big">AUTO</span><span class="ctl__sub">自动</span>
+          </button>
+          <button class="ctl ctl--wiper" type="button" data-wiper-value="1" aria-pressed="false" disabled>
+            <span class="ctl__label ctl__label--big">1</span><span class="ctl__sub">一档</span>
+          </button>
+          <button class="ctl ctl--wiper" type="button" data-wiper-value="2" aria-pressed="false" disabled>
+            <span class="ctl__label ctl__label--big">2</span><span class="ctl__sub">二档</span>
+          </button>
+          <button class="ctl ctl--wiper" type="button" data-wiper-value="3" aria-pressed="false" disabled>
+            <span class="ctl__label ctl__label--big">3</span><span class="ctl__sub">三档</span>
+          </button>
+        </div>
+        <p class="panel__foot" id="wiper-note">游戏仅回报雨刮开关，实际档位可能未知。AUTO、2/3 档需单独配置键位；模拟模式可体验全部档位。</p>
+      </div>
+
+      <div class="wheel" id="wheel-slot" aria-disabled="true" title="二期功能，尚未实现">
+        <span class="wheel__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3.4v6M4.6 16.6L9.8 13.6M19.4 16.6l-5.2-3"/></svg></span>
+        <span class="wheel__text">方向盘 / 转向 <b>二期</b></span>
+      </div>
+    </section>
+
+    <!-- 车辆功能 VEHICLE -->
+    <section class="panel panel--vehicle" aria-labelledby="t-vehicle">
+      <div class="panel__head">
+        <h2 class="panel__title" id="t-vehicle">车辆功能 <span class="en">VEHICLE</span></h2>
+        <span class="panel__hint">轻触切换</span>
+      </div>
+      <div class="toggle-grid">
+        <button class="ctl ctl--toggle" type="button" data-action="handbrake.toggle" data-state-key="handbrake"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M10 16.4V7.6h2.8a2.5 2.5 0 010 5H10"/></svg></span>
+          <span class="ctl__label">手刹</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--toggle" type="button" data-action="diffLock.toggle" data-state-key="diffLock"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.6" y="10.4" width="14.8" height="9.2" rx="2.2"/><path d="M8.4 10.4V7.8a3.6 3.6 0 017.2 0v2.6"/></svg></span>
+          <span class="ctl__label">差速锁</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--toggle" type="button" data-action="liftAxle.toggle" data-state-key="liftAxle"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.4 18.6h17.2"/><path d="M12 15.4V5.2"/><path d="M8.2 9L12 5.2 15.8 9"/><circle cx="6.6" cy="18.6" r="1.9"/><circle cx="17.4" cy="18.6" r="1.9"/></svg></span>
+          <span class="ctl__label">提升桥</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--toggle" type="button" data-action="cruise.toggle" data-state-key="cruise"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.8 16.4a8.2 8.2 0 1116.4 0"/><path d="M12 16.4l4.6-6"/><circle cx="12" cy="16.6" r="1.5"/></svg></span>
+          <span class="ctl__label">定速巡航</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+        <button class="ctl ctl--toggle" type="button" data-action="engine.toggle" data-state-key="engineOn"
+                aria-pressed="false" disabled>
+          <span class="ctl__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.6v7.2"/><path d="M7.4 6.6a6.7 6.7 0 109.2 0"/></svg></span>
+          <span class="ctl__label">发动机起停</span>
+          <span class="ctl__state" data-role="state">—</span>
+        </button>
+      </div>
+      <p class="panel__foot" id="vehicle-note">轻触按钮请求切换，状态以游戏回报为准。</p>
+    </section>
+  </main>
+
+  <footer class="logbar" id="logbar" role="log" aria-live="polite" aria-label="连接与操作日志">
+    <span class="logbar__item" data-kind="info">准备连接 <code id="log-host">…</code></span>
+  </footer>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
