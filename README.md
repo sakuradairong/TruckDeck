@@ -265,4 +265,4 @@ Windows 上退出强制模拟：PowerShell 执行 `Remove-Item Env:TRUCKDECK_MOC
 
 ## 许可
 
-本仓库尚未声明开源许可（默认保留所有权利）。如需复用或二次分发，请先开 issue 说明用途。
+[MIT](LICENSE) © 2026 sakuradairong
