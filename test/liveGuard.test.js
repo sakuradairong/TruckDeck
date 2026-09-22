@@ -159,7 +159,7 @@ test('executeCommand does not mock-apply after losing live mid-command', async (
   const config = {
     keyTapMs: 10,
     keybinds: {
-      'lights.hazard': 'H',
+      'lights.hazard': 'F',
       'lights.parking': 'L',
       'lights.beamLow': 'L',
     },
