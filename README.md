@@ -155,6 +155,36 @@ TRUCKDECK_PORT=4000 npm start
   > 启动日志会打印 `[config] 键位来源：…` 与关键键位，一眼可确认是否读对。
 
 
+## 语义输入通道（可选：scs，不经键盘）
+
+除了键盘注入，TruckDeck 还能通过 **SCS SDK 的输入接口**直接触发游戏动作，**完全不经过键盘**：
+
+- **前置**：游戏 `plugins/` 目录内有 **`scs_sdk_controller.dll`**（ETS2LA 出品，本机已随 ETS2LA 装上），且游戏正在运行——共享内存 `Local\SCSControls` 由该插件创建。未安装/未运行时会自动回退键盘注入。
+- **配置**：`config/server.default.json` 的 `"inputMode"`：`auto`（默认，优先语义输入）/ `scs`（只用语义输入）/ `keyboard`（只用按键）；也可用环境变量 `TRUCKDECK_INPUT=scs`。
+- **命令 → 语义输入映射**：
+
+  | TruckDeck 命令 | 语义输入 | 说明 |
+  | --- | --- | --- |
+  | `lights.parking` / `lights.beamLow` | `lightoff` / `lightpark` / `lighton` | **直达档位**，不像 `L` 键那样循环数步数 |
+  | `lights.beamHigh` | `hblight` | 开关 |
+  | `lights.hazard` | `flasher4way` | 开关 |
+  | `lights.blinkerLeft` / `lights.blinkerRight` | `lblinker` / `rblinker` | 开关 |
+  | `wipers.set` `off`/`1`/`2`/`3`/`auto` | `wipers0` / `wipers1` / `wipers2` / `wipers3` / `wipers1` | **直达档位**（游戏实际有 0–4 档；契约里的 `auto` 取间歇档） |
+  | `handbrake.toggle` | `parkingbrake` | 开关 |
+  | `diffLock.toggle` | `diflock` | 开关 |
+  | `liftAxle.toggle` | `liftaxle` | 开关 |
+  | `cruise.toggle` | `cruiectrl` | 开关 |
+  | `engine.toggle` | `ignitionstrt` / `ignitionoff` | 该插件没有 `engine` 输入，按当前状态选点火项 |
+
+- **优势**：与你的键位**完全无关**（改键也不影响）、**可以直达档位**（键盘注入做不到）、不占用键盘按键。
+- **实测限制**：
+  - 与键盘注入一样**需要游戏窗口在前台**（失焦时语义输入不生效，已双向验证）；
+  - SDK 遥测只回读雨刮开/关，档位不可回读（面板仍显示"开启 · 档位未知"）；
+  - `scs_sdk_controller` 自身有个已知副作用：**插件加载后雨刮会停在最大档**，其 README 指明唯一复位方式就是发送 `wipers0`。TruckDeck 在**首次探测到该通道可用时自动发送一次 `wipers0` 复位**；不需要就设 `"scsWipersResetOnConnect": false`（或 `TRUCKDECK_SCS_WIPERS_RESET=0`）。
+- **实现**：`server/src/input/scs.js`（客户端）+ `scscontrols_worker.ps1`（纯 ASCII，P/Invoke 写共享内存）+ `scsControlOffsets.json`（276 项偏移，由插件 `inputs.h` 生成，含自洽性测试）+ `server/src/commands/scsPlan.js`（命令 → 语义输入计划，纯函数）。
+
+---
+
 ### 灯光 / 雨刮真实性限制
 
 - 默认 `lights.parking` 与 `lights.beamLow` 同为 **L**：按 `off→parking→low→off` 循环，依遥测算步数；同状态 no-op。**关 parking 会连带关掉 low。**
