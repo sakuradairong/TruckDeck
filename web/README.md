@@ -44,7 +44,7 @@ npm start         # 先 build 再启动（默认 4000）
 
 - 灯光 / 雨刮 / 车辆按钮都显示 **开 ON / 关 OFF**（或档位名）文字，不单靠颜色区分，`aria-pressed` 同步。
 - 顶栏：连接状态、模式（mock/实时）、遥测频率与时效、目标地址，另有「重新连接」「全屏」。
-- 全屏会尝试 `requestFullscreen` + `screen.orientation.lock('landscape')`，被拒绝时温和提示，不影响操作。
+- 全屏：先探测 `requestFullscreen` / `webkitRequestFullscreen`（iPad Safari 走前缀版本），可用时进入全屏并尝试 `screen.orientation.lock('landscape')`。**iPhone / iPad 的 Safari 与 Chrome 同为 WebKit 内核、没有「整页全屏」接口**：此时点击「全屏」会弹出中文引导横幅（指向 Safari「添加到主屏幕」），已处于主屏幕模式（`navigator.standalone` / `display-mode: standalone`）则说明界面本就无浏览器工具栏、并提示 iOS 无法锁定方向。`.app` 使用 `env(safe-area-inset-*)` 补偿主屏模式下的状态栏遮挡。
 - 竖屏给出可关闭的温和提示（`sessionStorage` 记住），竖屏仍保留全部按钮；`viewport` **未**禁用用户缩放。
 - 添加到主屏幕：提供 manifest 与 apple meta。局域网 HTTP 非安全上下文，**Service Worker / 离线控制不可用**，也不声称可用。
 - 方向盘为灰色二期占位（`aria-disabled`，不接收点击）。

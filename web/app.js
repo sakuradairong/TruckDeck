@@ -24,6 +24,12 @@
   const MAX_LOG_ITEMS = 4;
   const RECONNECT_STEPS_MS = [1000, 2000, 3000, 5000, 8000, 10000];
 
+  // iOS 上 Safari 与「Chrome/Firefox/Edge」共用 WebKit：iPhone 没有任意元素全屏 API，
+  // 也无法锁定屏幕方向；iPad 仅提供 webkit 前缀版本。这里做能力探测 + 中文引导，不静默失败。
+  const UA = navigator.userAgent || '';
+  const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const IS_IOS_CHROME = /CriOS/.test(UA);
+
   const LIGHT_ACTIONS = {
     'lights.parking': { label: '示廓灯', key: 'parking' },
     'lights.beamLow': { label: '近光灯', key: 'beamLow' },
@@ -89,6 +95,9 @@
     orientDismiss: $('btn-orient-dismiss'),
     reconnectBtn: $('btn-reconnect'),
     fullscreenBtn: $('btn-fullscreen'),
+    fsHint: $('fs-hint'),
+    fsHintText: $('fs-hint-text'),
+    fsDismiss: $('btn-fs-hint-dismiss'),
     logbar: $('logbar'),
     speed: $('tele-speed'),
     rpm: $('tele-rpm'),
@@ -750,9 +759,23 @@
     connect('manual');
   }
 
-  // ---- 全屏（可能失败，温和降级） ----
+  // ---- 全屏（iOS/WebKit 有限制：能力探测 + 中文引导，不静默失败） ----
+  const standaloneQuery = window.matchMedia ? window.matchMedia('(display-mode: standalone)') : null;
+
+  function isStandaloneMode() {
+    if (window.navigator && window.navigator.standalone === true) return true;
+    return !!(standaloneQuery && standaloneQuery.matches);
+  }
+
   function fullscreenActive() {
     return document.fullscreenElement != null || document.webkitFullscreenElement != null;
+  }
+
+  function fullscreenTarget() {
+    const el = document.documentElement;
+    if (typeof el.requestFullscreen === 'function') return { el: el, fn: el.requestFullscreen };
+    if (typeof el.webkitRequestFullscreen === 'function') return { el: el, fn: el.webkitRequestFullscreen };
+    return null;
   }
 
   function updateFullscreenBtn() {
@@ -764,7 +787,10 @@
 
   function lockLandscape() {
     const so = window.screen && window.screen.orientation;
-    if (!so || typeof so.lock !== 'function') return;
+    if (!so || typeof so.lock !== 'function') {
+      if (IS_IOS) pushLog('warn', 'iOS 不支持锁定屏幕方向，请关闭系统方向锁后手动横屏');
+      return;
+    }
     try {
       const p = so.lock('landscape');
       if (p && typeof p.catch === 'function') {
@@ -773,15 +799,43 @@
     } catch (err) { /* 不支持：忽略 */ }
   }
 
+  function showFullscreenHint(text, shortLog) {
+    if (els.fsHint && els.fsHintText) {
+      els.fsHintText.textContent = text;
+      els.fsHint.hidden = false;
+    }
+    pushLog('warn', shortLog || text);
+  }
+
+  function fullscreenHintText() {
+    if (isStandaloneMode()) {
+      return '已以「主屏幕应用」方式运行：界面本身就没有浏览器工具栏，无需再全屏。iOS 无法用网页锁定方向，请关闭系统「方向锁定」后横屏握持。';
+    }
+    const prefix = IS_IOS_CHROME
+      ? 'iOS 上的 Chrome 与 Safari 使用同一 WebKit 内核，同样没有「整页全屏」接口。'
+      : '这是 iOS 的系统限制：iPhone / iPad 的浏览器不提供「整页全屏」接口，网页无法绕过。';
+    return prefix + '替代做法：用 Safari 打开本页 → 轻触底部「分享」按钮 → 选择「添加到主屏幕」→ 再从主屏幕上的 TruckDeck 图标启动，即可获得无地址栏的全屏界面。';
+  }
+
   function toggleFullscreen() {
-    const el = document.documentElement;
-    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    const target = fullscreenTarget();
+    if (!target) {
+      showFullscreenHint(
+        IS_IOS ? fullscreenHintText() : '当前浏览器不支持全屏 API，可手动横屏使用。',
+        IS_IOS
+          ? (isStandaloneMode()
+            ? '已在主屏幕模式运行；iOS 无法锁定方向，请手动横屏'
+            : 'iOS 不支持整页全屏：请用 Safari「添加到主屏幕」后从图标启动')
+          : '当前浏览器不支持全屏 API'
+      );
+      return;
+    }
+
     const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    if (typeof request !== 'function') { pushLog('warn', '当前浏览器不支持全屏 API，可手动横屏使用'); return; }
     try {
       const promise = fullscreenActive()
         ? (typeof exit === 'function' ? exit.call(document) : null)
-        : request.call(el);
+        : target.fn.call(target.el);
       if (promise && typeof promise.then === 'function') {
         promise.then(() => { lockLandscape(); updateFullscreenBtn(); })
           .catch(() => { pushLog('warn', '全屏请求被浏览器拒绝（需用户手势或权限），可手动横屏'); });
@@ -857,6 +911,9 @@
         try { sessionStorage.setItem('truckdeck-orient-dismissed', '1'); } catch (err) { /* ignore */ }
         updateOrientationHint();
       });
+    }
+    if (els.fsDismiss) {
+      els.fsDismiss.addEventListener('click', () => { if (els.fsHint) els.fsHint.hidden = true; });
     }
 
     document.addEventListener('fullscreenchange', updateFullscreenBtn);
@@ -947,7 +1004,20 @@
     pushLog('error', '页面初始化失败：' + (err && err.message ? err.message : String(err)));
   }
 
+  // 手机上看不到开发者控制台：把未捕获错误同步写进页面底部日志条，便于真机排障
   window.addEventListener('unhandledrejection', (event) => {
+    const reason = event && event.reason ? (event.reason.message || String(event.reason)) : '未知原因';
     console.error('[TruckDeck] 未处理的 Promise 拒绝', event.reason);
+    pushLog('error', '未处理的异步错误：' + reason);
+  });
+
+  window.addEventListener('error', (event) => {
+    // 资源（img/script）加载失败也会触发 error 事件但没有 message，这里不当作脚本错误
+    if (event && event.target && event.target !== window && !event.message) return;
+    const msg = event && event.message ? event.message : '未知错误';
+    const file = event && event.filename ? String(event.filename).split('/').pop() : '';
+    const where = file ? '（' + file + ':' + (event.lineno || 0) + '）' : '';
+    console.error('[TruckDeck] 未捕获错误', (event && event.error) || msg);
+    pushLog('error', '页面脚本错误：' + msg + where);
   });
 })();

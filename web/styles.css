@@ -58,7 +58,12 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
   display: flex;
   flex-direction: column;
   gap: var(--gap);
-  padding: var(--gap);
+  /* iOS「添加到主屏幕」后（status-bar-style=black-translucent）内容会延伸到状态栏/圆角下，
+     这里做安全区补偿；非刘海设备与桌面浏览器该值为 0，不影响既有布局 */
+  padding: calc(var(--gap) + env(safe-area-inset-top, 0px))
+           calc(var(--gap) + env(safe-area-inset-right, 0px))
+           calc(var(--gap) + env(safe-area-inset-bottom, 0px))
+           calc(var(--gap) + env(safe-area-inset-left, 0px));
   height: 100dvh;
   overflow: hidden;
 }
