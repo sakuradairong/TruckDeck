@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "port": 4000,
+  "health": {
+    "ok": true,
+    "mock": true
+  },
+  "telemetryHz": 10,
+  "commandsVerified": 22,
+  "actions": 12
+}

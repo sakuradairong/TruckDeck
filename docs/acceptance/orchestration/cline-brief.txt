@@ -1,0 +1,10 @@
+任务标题：TruckDeck — mobile web mid-console UI
+你是 Cline Agent，受 Astra 编排委派，Cursor Agent 已完成可运行后端与冻结契约。
+工作目录 /root/github_projects/TruckDeck。只可写 web/ 内文件；不得修改根 package.json、server/、config/、docs/，尤其不得更改 API_CONTRACT.md。已获用户授权实现，不要停留在计划或再次请求设计确认。无需初始化 git 或提交（当前不是真实 Git 仓库）。
+实现原生 HTML/CSS/JS 手机横屏中文深色中控，避免引入框架。根 npm run build 会把 web/ 发布内容复制至 server/public/；npm start 自动构建。所有依赖/字体/图标在本地，不使用 CDN。
+设计：精致克制的深灰汽车中控、琥珀/青色状态点缀、大触摸目标；桌面也好用；中文为主，分区 灯光 LIGHTS / 雨刮 WIPER / 车辆功能。顶部已连接/mock/断开、遥测状态、重连反馈；仪表展示车速 km/h、转速 RPM、档位、燃油%、气压 psi。至少6灯光按钮（示廓/近光/远光/左转/右转/双闪，ON/OFF），5雨刮档位（0/AUTO/1/2/3），5车辆按钮（手刹/差速锁/提升桥/定速/发动机起停），灰色方向盘（二期）占位。横屏 844x390、667x375 和竖屏 390x844 均可正常触摸，不截断/重叠关键操作；竖屏给温和横屏提示但仍可操作。图标可以内联 SVG，状态不能仅靠颜色区分。
+严格按下方完整契约实现 ws(s):// + location.host + /ws，先 hello；只用 telemetry 更新真实状态，不用 ack 乐观反转状态。连接断开/握手未成功/数据过期时禁用控制，有自动重连，避免重复 socket 和积压命令。通过 hello.mock 显示 mock，支持服务器后续 hello 模式变化；可以定时 /health 同步 mock 标志。处理 command_ack/command_nack/error，中文可读提示，id 关联，避免快速重复点击。灯光传 boolean 目标，toggle 省略 value，雨刮值 off/auto/1/2/3。不得发送 vJoy/轴命令。
+尽量支持添加到主屏幕：本地 manifest/图标/apple meta；LAN HTTP 通常无法安装完整 PWA/Service Worker，不能依赖它或声称离线控制可用。可加全屏按钮，失败要温和降级。避免浏览器限制导致初始页面卡死。
+完成前实际运行 npm run build（此命令由 Cursor 提供，只执行、不编辑），如现有服务可用请检查 /health 和页面；可用浏览器工具/agent-browser 做横屏和按钮验证。只报告真实运行结果，不声称在真实手机/游戏验证。回传文件清单、构建方式、契约对应、已验证项、限制。
+冻结契约路径：/root/github_projects/TruckDeck/docs/API_CONTRACT.md
+以下是契约全文，优先以磁盘上的同一路径为准，禁止修改：

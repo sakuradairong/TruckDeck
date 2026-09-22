@@ -1,0 +1,135 @@
+{
+  "ok": true,
+  "port": 4013,
+  "startedAt": "2026-09-22T08:27:50.226Z",
+  "node": "v24.18.0",
+  "health": {
+    "ok": true,
+    "mock": true
+  },
+  "hello": {
+    "mock": true,
+    "telemetryHz": 10,
+    "version": "1"
+  },
+  "telemetryHz": 9.98,
+  "commandsVerified": 22,
+  "actionsCovered": 12,
+  "frontend": {
+    "bytes": 13583,
+    "externalAssets": 0
+  },
+  "negative": {
+    "originForeign": 403,
+    "originOpaque": 403,
+    "originPortMismatch": 403,
+    "hostForeign": 403,
+    "wrongPath": 404,
+    "helloRequired": "HELLO_REQUIRED",
+    "badVersion": "UNSUPPORTED_VERSION",
+    "invalidJson": "INVALID_JSON",
+    "unknownType": "UNKNOWN_TYPE",
+    "unknownAction": "UNKNOWN_ACTION",
+    "invalidValue": "INVALID_VALUE x3",
+    "oversizedFrame": {
+      "closed": true,
+      "code": 1009
+    }
+  },
+  "finishedAt": "2026-09-22T08:27:56.366Z",
+  "passedChecks": 18,
+  "totalChecks": 18,
+  "failedChecks": [],
+  "checks": [
+    {
+      "name": "/health 返回精确 {\"ok\":true,\"mock\":true}",
+      "ok": true,
+      "detail": "{\"ok\":true,\"mock\":true}"
+    },
+    {
+      "name": "GET / 返回中控页面且无外链资源",
+      "ok": true,
+      "detail": "13583 字节，外链 0，含中文"
+    },
+    {
+      "name": "PWA 资源可达（manifest 与图标）",
+      "ok": true,
+      "detail": "manifest + 3 个图标均 200"
+    },
+    {
+      "name": "WS 升级：外域 Origin 被拒（403）",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "WS 升级：Origin=null 被拒（403）",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "WS 升级：Origin 端口与服务端口不一致被拒（403）",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "WS 升级：非本机 Host 头被拒（403）",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "WS 升级：非 /ws 路径被拒（404）",
+      "ok": true,
+      "detail": "404"
+    },
+    {
+      "name": "未 hello 即发 command → HELLO_REQUIRED",
+      "ok": true,
+      "detail": "HELLO_REQUIRED"
+    },
+    {
+      "name": "hello 版本不符 → hello ack 失败",
+      "ok": true,
+      "detail": "ok=false error=UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "hello 握手返回契约字段且 mock=true",
+      "ok": true,
+      "detail": "mock=true Hz=10"
+    },
+    {
+      "name": "telemetry 频率达到契约下限（≥5Hz）",
+      "ok": true,
+      "detail": "9.98 Hz（15 帧 / 1.50s）"
+    },
+    {
+      "name": "12 类 action 全部可用且状态与遥测一致（22 次操作）",
+      "ok": true,
+      "detail": "22 次操作 / 12 类 action 全部 ack 且回显一致"
+    },
+    {
+      "name": "非 JSON 载荷 → INVALID_JSON 且连接不断开",
+      "ok": true,
+      "detail": "INVALID_JSON"
+    },
+    {
+      "name": "未知消息类型 → UNKNOWN_TYPE",
+      "ok": true,
+      "detail": "UNKNOWN_TYPE"
+    },
+    {
+      "name": "未知 action → command_nack UNKNOWN_ACTION",
+      "ok": true,
+      "detail": "UNKNOWN_ACTION"
+    },
+    {
+      "name": "value 缺失/非法 → command_nack INVALID_VALUE",
+      "ok": true,
+      "detail": "3 种非法 value 均被拒"
+    },
+    {
+      "name": "帧超过 8KiB → 连接被关闭",
+      "ok": true,
+      "detail": "连接已关闭（code=1009）"
+    }
+  ]
+}

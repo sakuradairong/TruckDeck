@@ -1,0 +1,20 @@
+PASS  /health 返回精确 {"ok":true,"mock":true}  ::  {"ok":true,"mock":true}
+PASS  GET / 返回中控页面且无外链资源  ::  13583 字节，外链 0，含中文
+PASS  PWA 资源可达（manifest 与图标）  ::  manifest + 3 个图标均 200
+PASS  WS 升级：外域 Origin 被拒（403）  ::  403
+PASS  WS 升级：Origin=null 被拒（403）  ::  403
+PASS  WS 升级：Origin 端口与服务端口不一致被拒（403）  ::  403
+PASS  WS 升级：非本机 Host 头被拒（403）  ::  403
+PASS  WS 升级：非 /ws 路径被拒（404）  ::  404
+PASS  未 hello 即发 command → HELLO_REQUIRED  ::  HELLO_REQUIRED
+PASS  hello 版本不符 → hello ack 失败  ::  ok=false error=UNSUPPORTED_VERSION
+PASS  hello 握手返回契约字段且 mock=true  ::  mock=true Hz=10
+PASS  telemetry 频率达到契约下限（≥5Hz）  ::  9.33 Hz（14 帧 / 1.50s）
+PASS  12 类 action 全部可用且状态与遥测一致（22 次操作）  ::  22 次操作 / 12 类 action 全部 ack 且回显一致
+PASS  非 JSON 载荷 → INVALID_JSON 且连接不断开  ::  INVALID_JSON
+PASS  未知消息类型 → UNKNOWN_TYPE  ::  UNKNOWN_TYPE
+PASS  未知 action → command_nack UNKNOWN_ACTION  ::  UNKNOWN_ACTION
+PASS  value 缺失/非法 → command_nack INVALID_VALUE  ::  3 种非法 value 均被拒
+PASS  帧超过 8KiB → 连接被关闭  ::  连接已关闭（code=1009）
+
+复验通过：18/18 项通过

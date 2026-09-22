@@ -1,0 +1,310 @@
+
+> truckdeck@1.0.0 test
+> node --test test/*.test.js
+
+[input:worker] exited 0
+✔ mock protocol worker ready/tap/quit on Linux (56.892993ms)
+[input:worker] exited 0
+✔ late reply with wrong id does not confirm newer tap (201.099202ms)
+✔ mock protocol rejects bad key name (0.940709ms)
+[telemetry] mode=mock (TRUCKDECK_MOCK=1) gen=1
+✔ GET /health exact shape (22.942979ms)
+✔ GET / serves page (7.316055ms)
+[ws] open from 127.0.0.1
+✔ WS hello required before command (8.98014ms)
+[ws] open from 127.0.0.1
+[ws] close from 127.0.0.1
+✔ WS hello ack includes mock (6.493486ms)
+[ws] open from 127.0.0.1
+[ws] close from 127.0.0.1
+✔ telemetry frequency >= 5Hz (741.033154ms)
+[ws] open from 127.0.0.1
+[ws] close from 127.0.0.1
+[mock] command lights.beamLow true → {
+  lights: {
+    parking: false,
+    beamLow: true,
+    beamHigh: false,
+    blinkerLeft: false,
+    blinkerRight: false,
+    hazard: false
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command lights.parking true → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: false,
+    blinkerLeft: false,
+    blinkerRight: false,
+    hazard: false
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command lights.beamHigh true → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: false,
+    hazard: false
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command lights.blinkerLeft true → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: true,
+    blinkerRight: false,
+    hazard: false
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command lights.blinkerRight true → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: false
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command lights.hazard true → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command wipers.set 2 → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: '2',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command wipers.set auto → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'auto',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command wipers.set 3 → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: '3',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command wipers.set off → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: true,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command handbrake.toggle  → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: false,
+  diffLock: false,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command diffLock.toggle  → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: false,
+  diffLock: true,
+  liftAxle: false,
+  cruise: false,
+  engineOn: true
+}
+[mock] command liftAxle.toggle  → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: false,
+  diffLock: true,
+  liftAxle: true,
+  cruise: false,
+  engineOn: true
+}
+[mock] command cruise.toggle  → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: false,
+  diffLock: true,
+  liftAxle: true,
+  cruise: true,
+  engineOn: true
+}
+[mock] command engine.toggle  → {
+  lights: {
+    parking: true,
+    beamLow: true,
+    beamHigh: true,
+    blinkerLeft: false,
+    blinkerRight: true,
+    hazard: true
+  },
+  wipers: 'off',
+  handbrake: false,
+  diffLock: true,
+  liftAxle: true,
+  cruise: false,
+  engineOn: false
+}
+✔ all mock commands echo via telemetry (202.626181ms)
+[ws] open from 127.0.0.1
+[ws] close from 127.0.0.1
+✔ invalid command / bad JSON / array body (9.704851ms)
+✔ forbidden origin rejected (5.27135ms)
+[ws] close from 127.0.0.1
+✔ foreign private Origin rejected even with local Host (6.894835ms)
+[ws] open from 127.0.0.1
+[ws] socket error Max payload size exceeded
+[ws] close from 127.0.0.1
+✔ oversized frame does not kill server (208.563646ms)
+✔ bad Host header rejected on HTTP (7.609729ms)
+✔ keybind whitelist (0.488831ms)
+✔ server survives after malformed upgrade Host (6.965106ms)
+✔ classify light positions (1.367313ms)
+✔ parking/beamLow shared cycle planning (1.016779ms)
+[telemetry] mode=mock (pending first probe) gen=1
+[telemetry] mode=live (scs-sdk-plugin sdkActive) gen=2
+[telemetry] mode=mock (pending first probe) gen=1
+[telemetry] mode=live (scs-sdk-plugin sdkActive) gen=2
+[telemetry] mode=mock (scs shared memory inactive (game/plugin not connected)) gen=3
+[telemetry] mode=mock (pending first probe) gen=1
+[telemetry] mode=live (scs-sdk-plugin sdkActive) gen=2
+[input] starting live key worker
+✔ fresh read at execution discards commands accepted in the previous mode (5.888132ms)
+[telemetry] mode=mock (scs shared memory inactive (game/plugin not connected)) gen=3
+[input:worker] exited 0
+[telemetry] mode=mock (pending first probe) gen=1
+[telemetry] mode=live (scs-sdk-plugin sdkActive) gen=2
+[input] starting live key worker
+✔ requireLive fails after live→mock; requireLive tap never mock-succeeds (79.28557ms)
+[telemetry] mode=mock (scs shared memory inactive (game/plugin not connected)) gen=3
+[input:worker] exited 0
+✔ executeCommand does not mock-apply after losing live mid-command (68.011904ms)
+[telemetry] mode=mock (pending first probe) gen=1
+[telemetry] mode=live (scs-sdk-plugin sdkActive) gen=2
+[telemetry] mode=mock (scs shared memory inactive (game/plugin not connected)) gen=3
+[telemetry] mode=mock (TRUCKDECK_MOCK=1) gen=1
+✔ mock→live→mock follows sdkActive/connected (3.097974ms)
+✔ forceMock never goes live (0.375167ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1497.800339

@@ -1,0 +1,8 @@
+Astra 复核后端最后一批对接修正。Cline 已在 Act 真正写 web/，勿触碰其目录。协议格式不变。请修复以下明确问题、加必要回归并执行 npm test，完成停止。
+1. live→mock 后 telemetry.snapshot() 返回 mock connected:true。handler 内多处仅检查 .connected 会误认真实源仍连通；input facade 在此时返回 mockInput.tap 成功，会假报真实命令成功。定义统一 fresh live guard（snapshot 后必须 !isMock && canInject），真实命令过程中模式丢失应立即失败 UNSUPPORTED，不应降级为mock命令；Windows worker等待ready期间模式也可能丢失，真正写入tap前再guard。input facade 不可把请求真实注入的调用降级为成功的 mock tap。用注入依赖测试保证mock→live可启用、live→mock绝不发OS键。
+2. wsHub队列目前disconnect后/模式转换前积压的命令仍会在新模式执行（pause只有50ms不能失效它们）。捕获入队时session有效性、模式代次和入队时间，执行时若断开/模式代次变化/过期则nack UNSUPPORTED并跳过。queue增加停机close/取消待执行，再drain后input.dispose，不能服务停了仍发键。上限32与单命令超时可能积压数分钟，命令有效期建议1500ms。
+3. Worker协议用FIFO且超时只移除pending，则旧tap迟来的回复会错误确认新tap。给内部JSON行请求加id并回传相关id（这不是WS协议），或超时终止且隔离旧worker事件后再新建。处理ready超时移除waiters；任何旧child的exit/error不能清空新child状态。PowerShell失败信息目前手拼JSON遇到多行/反斜杠会非法，改ConvertTo-Json -Compress。加实际迟到回复回归，用Node仿真worker。
+4. ws telemetryHz配置可30但intervalMs Math.max(100,...)导致恒<=10Hz，改与实际Hz匹配。加ws.bufferedAmount上限跳过/断开慢客户端以免不限缓存。
+5. 普通非循环灯光当前第一次tap未及时回显就自动再tap，有翻回原状态风险。只发送所需一次，有限等待遥测（例如600ms），不盲重发，未匹配返回INJECT_FAILED。循环灯光逐步发送但也需充分等待。握手repeat版本失败后应重置helloOk防止仍可发命令。
+6. README目前声称未在Linux验证Windows有歧义，明确“Windows实体机/游戏尚未验收”；全功能mock可演示。更新package-lock根engines >=22使其与package一致（npm install --package-lock-only即可）。对接说明只改docs/INTEGRATION_PATCH.md，不改API_CONTRACT。
+请控制改动范围，不引入框架，不新建无关文档，保持已有端口/消息/动作枚举与Cline兼容。不要启动长期测试服务器，Astra会重启4000。

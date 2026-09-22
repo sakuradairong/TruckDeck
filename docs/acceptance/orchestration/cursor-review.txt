@@ -1,0 +1,11 @@
+Astra 初审反馈（请以最终文件为准修复；保持冻结端口/事件不变）：
+1. telemetry/index.js 当前仅判断 scs.available（Node 包可加载），即使 Windows 未运行游戏/无插件，scs.read().connected=false 也会维持 live。与“无插件/无游戏自动 mock”契约不符。请依据有效共享内存/sdkActive 选择 mock/live，模式改变向已有 WS 客户端发送契约现有 hello ack 更新 mock，保证切换瞬间不会注入误命令。补 mock→live→mock 测试，用注入的遥测源/平台即可，不需要 Windows 游戏。
+2. 默认 lights.parking 与 lights.beamLow 均绑定 L。游戏 L 是 off→parking→low→off 循环，不能收到 boolean target 就只 tap 一次；请依据当前遥测推导所需有限步数，同状态 no-op；说明关 parking 导致 low 同时关闭的耦合。需有纯函数决策验证。
+3. 键盘发送不能因 SDK 断线而继续工作；异步 command 必须串行且队列有界，防止交错及长积压。tick 真实状态不能依赖上一次 ack 自造状态。
+4. 当前 package.json engines >=18 与 trucksim-telemetry@1.0.0 要求 >=22 不一致，统一 Node >=22（推荐24）。配置端口/频率要合理有限数校验，/ws 不可经配置意外改变。
+5. 在最终 README 说明 SDK 仅回读雨刮 bool，真实 off/1 可辨，其余级别/AUTO 不能伪造回显。默认 wipers AUTO 未映射须拒绝，mock 全五档仍可用。
+6. Origin 当前只需任意私网 host + 同端口即可。请进一步匹配浏览器 Origin 与请求 Host，并验证 Host 为当前机器接口 IP/localhost，避免其他私网页面跨站控制。保持合法 localhost/127.0.0.1/PC LAN IP 可用。
+7. Windows SendInput 严重结构错误：当前 INPUT 仅 type + KEYBDINPUT，缺少包含 MOUSEINPUT/HARDWAREINPUT 的显式 union。x64 Marshal.SizeOf(INPUT) 会是32，而 Win32 INPUT 必须40（x86=28），SendInput 会失败但当前没检查返回值且误报成功。必须用正确 union/结构大小、检查返回值，失败抛 Win32Exception；可采用扫描码事件兼容游戏；扩展键需要 EXTENDEDKEY 标志。请引用 Microsoft 文档依据。
+8. Windows worker 还需 child error/stdin error 处理、响应超时、握手ready、清退pending；dispose 应先等待 worker 释放而不是写quit后立即kill（可能卡键）。不要把 PowerShell 标准输入既当脚本又当 JSON 消息流，验证 -EncodedCommand 或脚本文件方式可正确逐行读消息。应做可在 Linux 运行的 mock worker 行为测试，Windows 真机测试列为限制。
+9. 雨刮当前用遥测 bool映射 '1' 推算当前 1/2/3 位置会导致用户重复选择不同档时错误循环。请避免这一假设：仅对有明确独立映射的档位发送，或用可配置的复位/步进策略确保已知状态；当前未知时返回 UNSUPPORTED 说明游戏SDK无法辨档。不应对未知真实档位返回假成功。保留mock五档完整体验。
+10. wsHub 的 upgrade new URL 对恶意/异常 Host 会抛异常、async executeCommand 拒绝未捕获、ws error 未监听；请加隔离错误处理，限制 maxPayload（例如8KB），连接级节流/hello超时，避免畸形请求使进程崩溃。与第3项一并做有界串行 command 执行（不同手机也共用一个硬件输入队列）。至少验证坏 JSON/数组/大帧/错误Host不会杀死服务。

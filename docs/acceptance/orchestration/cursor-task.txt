@@ -1,0 +1,30 @@
+任务标题：TruckDeck — server scaffold + telemetry + key inject + contract
+
+你是 Cursor Agent，受编排者 Astra 委派。必须亲自完成后端代码、工程骨架、遥测/按键、中文 README 与契约文档。工作目录 /root/github_projects/TruckDeck 当前为空（.git 是受保护占位，并非有效仓库，不初始化 git，不提交）。另一位 Cline Agent 会在你完成后仅实现 web/。不要实现正式 UI，不要写 web/ 内的应用代码。
+
+产品：局域网电脑 Node Express + WebSocket 服务，手机中文横屏控制 ETS2/ATS。默认端口必须 4000，WS 路径冻结为 /ws。仅局域网使用，拒绝非本地/私网来源，合理校验 WS Origin 和输入，避免网页跨站触发键盘。不要引入公网服务、隧道、密钥上传、无关框架。二期 vJoy/陀螺仪只保留接口与 TODO。
+
+请先建立 docs/API_CONTRACT.md 并冻结 v1，再实现：
+结构：根 package.json / README.md；server/；预留 web/；config/keybinds.default.json、server.default.json；docs/ARCHITECTURE.md、API_CONTRACT.md、PHASE2_VJOY.md。
+根 npm install && npm start 必须能启动。前端会采用 web/ 内原生 HTML/CSS/JS 以减少依赖，请约定 npm run build 从 web/ 复制可发布文件到 server/public/，npm start 可自动执行 build（前端未就绪时仍能启动，给出极简状态页）。构建脚本由你实现，Cline 只写 web/，不要依赖它修改根 scripts。
+
+共享 WS 契约：URL ws://<PC-LAN-IP>:4000/ws；前端必须用 location.host 自动连当前端口。
+手机 hello：{"type":"hello","role":"web","version":"1"}，服务端 hello ack 必须在契约写明，含 mock 布尔值以供前端显示 mock 状态。
+服务端 telemetry >=5Hz，推荐10Hz：
+{"type":"telemetry","ts":1710000000000,"data":{"connected":true,"speedKmh":0,"engineRpm":0,"gear":0,"fuelPct":0,"airPressure":0,"lights":{"parking":false,"beamLow":false,"beamHigh":false,"blinkerLeft":false,"blinkerRight":false,"hazard":false},"wipers":"off","handbrake":false,"diffLock":false,"liftAxle":false,"cruise":false,"engineOn":false}}
+手机 command：{"type":"command","action":"lights.beamLow","value":true}。
+枚举：lights.parking、lights.beamLow、lights.beamHigh、lights.blinkerLeft、lights.blinkerRight、lights.hazard（boolean target），wipers.set（冻结可选值为 off/auto/1/2/3，对应 0/AUTO/1/2/3），handbrake.toggle、diffLock.toggle、liftAxle.toggle、cruise.toggle、engine.toggle（明确 value 的可选性/类型）。命令确认与失败消息的完整 shape、错误枚举、hello 顺序、是否必须先 hello、单位及 mock connected 含义都写清。命令 ack 不能代替真实遥测回显。
+HTTP GET /health 精确返回 {"ok":true,"mock":true|false}；GET / 托管 build 产物。
+配置：默认 port 4000；TRUCKDECK_PORT；TRUCKDECK_MOCK=1 强制 mock。config/keybinds.default.json 为 action→键映射，允许本地 JSON 修改，文档解释需与游戏内键位一致。
+
+功能要求：
+1. mock 可动态生成速度/RPM/档位等数据，并让所有有效 command 改变相应遥测状态、产生日志；mock 绝不能向宿主 OS 注入按键。
+2. 真实遥测使用成熟 scs-sdk-plugin / Node 桥 或 SCS 共享内存实现。必须核对官方/维护者一手 API 与字段单位；不要靠猜包 API。插件不可用时自动 mock，运行中连接状态/模式变化不得静默误报。
+3. Windows 按键注入实际实现，依赖自选（例如 PowerShell + SendInput 持久 worker，或靠谱库），Linux 可运行 mock。键值只接受明确白名单，不插入任意 PowerShell。严格避免卡住按键，退出要释放。README 写依赖、权限、焦点要求。如游戏只能循环雨刮/灯光，明确离散状态映射及真实性限制；AUTO 没有可用游戏绑定时明确拒绝或配置映射，禁止假装成功。
+4. 带上有价值的 Node 集成验证：/health、WS hello/telemetry 频率、全部 command mock 回显、非法命令/来源/握手处理、关键 mapping；实际运行安装启动测试。
+5. 中文 README：Node LTS 安装；npm install/build/start；ipconfig 获取 LAN IP；手机 http://IP:4000；插件具体安装路径 bin/win_x64/plugins、来源链接/版本说明及桥接方式；Windows 私有网络防火墙；键位修改；mock 与真实切换；已知限制；故障说明；二期入口。不要声称在 Linux 上验证了 Windows 游戏。
+6. PHASE2_VJOY.md 与 server 内 TODO 只留接口草稿，不实现 vJoy。
+
+约束：不得擅自变更端口/路径/事件名；契约如有需求必须写清并回报给 Astra，后续由 Astra 通知 Cline。所有编辑仅限工作区与 /tmp，不读取输出密钥，不改全局配置。/root/AGENTS.md 要求图工具先行；若该工具不可用或新项目尚无图，说明并用普通文件方式。不要因工作区空、无 git 或无 Windows 中止。
+
+完成时回传：冻结契约全文路径、npm 安装/启动/构建命令、实现文件清单、测试实测结果、真实遥测策略/插件安装事实依据、限制、给 Cline 的必要信息。先确保 server 实际可运行，再结束。
